@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1 "/>
+		<!-- <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=2, minimum-scale=1,
+		width=device-width, height=device-height, target-densitydpi=device-dpi" /> -->
+		<title>Live Helper</title>
+
+		<!-- <link rel="stylesheet" href="docsdemos-style-override.css" /> -->
+
+		<link rel="stylesheet" href="jquery.mobile/jquery.mobile-1.4.5.css" type="text/css">
+		<link rel="stylesheet" href="jquery.mobile/msg.css" type="text/css">
+		<script src="cordova-1.9.0.js" type="text/javascript"></script>
+		<script type="text/javascript" src="jquery.mobile/jquery-1.7.2.min"></script>
+		<script type="text/javascript" src="jquery.mobile/jquery.mobile-1.4.5.js"></script>
+		<script src="jquery.mobile/mum.js"></script>
+		<script>
+			// =====================Init Device==================
+			function onLoad() {
+
+				document.addEventListener("deviceready", onDeviceReady, false);
+				function onDeviceReady() {
+					document.addEventListener("offline", onOffline, false);
+					document.addEventListener("online", onOnline, false);
+					document.addEventListener("backbutton", eventBackButton, false);
+
+				}
+
+				var t = 1;
+				var time1;
+				function eventBackButton() {
+
+					if (t % 2 == 1) {
+						// $("#pExit").click();
+						delAdd("再按一次我就要走了哦~");
+						time1 = new Date().getTime();
+						t++;
+					} else {
+						time2 = new Date().getTime();
+						if (time2 - time1 < 3000) {
+							navigator.app.exitApp();
+						}
+						t++;
+					}
+				}
+
+				function onOnline() {
+					delAdd("我醒了");
+				}
+
+				function onOffline() {
+					delAdd("网断了啊");
+				}
+
+				delAdd("你好啊");
+			}
+
+			// =====================END Init=======================
+			//edit key
+			var url = "http://www.tuling123.com/openapi/api?key=YOURKEY&info=";
+
+			function postMsg(info) {
+				$.ajax({
+					type : "post",
+					url : url + info,
+					dataType : "json",
+					success : function(data) {
+						anaMsg(data);
+					},
+					error : function(e) {
+						if (e.code == undefined && e.text == undefined)
+							delAdd("我在发呆,请检查网络状况~");
+					}
+				});
+			};
+			//analysis response
+			function anaMsg(obj) {
+				switch(obj.code) {
+				case 100000:
+					// alert("文本类");
+					delText(obj.text);
+					break;
+				case 200000:
+					//alert("连接类");
+					delHref(obj);
+					break;
+				case 302000:
+					//alert("新闻类");
+					delNews(obj);
+					break;
+				case 308000:
+					//alert("菜谱类");
+					break;
+				case 40004:
+					// alert("次数聊完了");
+					delAdd("今天我累了，明天再找我吧~");
+					break;
+				default :
+					delAdd("我不了解额");
+					break;
+				}
+			};
+			//deal text
+			function delText(text) {
+				delAdd(text);
+			};
+			function delNews(obj) {
+				con = '<ul data-role="listview">  ';
+				for (x in obj.list) {
+					// alert(obj.list[x].article);
+					// alert("ICON"+obj.list[x].icon);
+					con += '<li><a href="' + obj.list[x].detailurl + '">' + obj.list[x].article + ' </a></li>';
+				}
+				con += ' </ul>';
+				delAdd(con);
+			}
+
+			function delCook(obj) {
+				con = '';
+			}
+
+			// deal Href
+			function delHref(obj) {
+				con = obj.text + ',<a href="' + obj.url + '">查看</a>';
+				delAdd(con);
+			}
+
+			// add result
+			function delAdd(text) {
+				con = '<div class="left"><div class="text"><i></i><span>' + text + '</span></div></div>';
+				$("#msgtext").append(con);
+				location.href = "#bom";
+			};
+			//send msg to server
+			var send = function() {
+				if (($("#msgcont").val()).trim() == "") {
+					return;
+				} else {
+					var con = '<div class="right"><div class="text"><i></i><span>' + $("#msgcont").val() + '</span></div></div>';
+					$("#msgtext").append(con);
+					postMsg($("#msgcont").val());
+					$("#msgcont").val("");
+
+				}
+				var height = $("#msgtext").height();
+				$("#box").scrollTop(height);
+			};
+
+			var exit = function() {
+				navigator.app.exitApp();
+				// windows.close();
+			};
+
+			$(document).on("pagecreate", "#mumpage", fuc);
+		</script>
+	</head>
+	<body onload="onLoad()">
+
+		<div data-role="page" class="ui-page-theme-a" id="pageindex" >
+			<div data-role="popup" id="popwea" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
+				<div data-role="header" data-theme="a">
+					<h1>今天天气</h1>
+				</div>
+				<div role="main" class="ui-content">
+					<p>
+						天气阴凉
+					</p>
+					<a href="#" class="ui-btn ui-corner-all ui-shadow ui-m ui-btn-inline ui-btn-b" data-rel="back">关闭</a>
+				</div>
+			</div>
+			<!-- left panel -->
+			<div class="ui-panel ui-panel-position-left ui-panel-display-overlay ui-panel-animate ui-panel-closed"
+			data-role="panel" id="lpanel" data-position="left" data-display="overlay">
+				<div class="ui-panel-inner">
+					<div>
+						<h3>功能列表</h3>
+						<ul data-role="listview">
+							<li>
+								<a href="#mumpage" data-transition="slide" data-direction="reverse">备忘录</a>
+							</li>
+							<li>
+								<a href="#popwea"  data-rel="popup" data-position-to="window" data-transition="pop">天气</a>
+							</li>
+						</ul>
+					</div>
+					<div >
+						<a href="#demo-links" data-rel="close" class="ui-btn ui-mini ui-shadow ui-corner-all ui-btn-inline">关闭</a>
+					</div>
+				</div>
+
+			</div>
+			<!-- News -->
+			<div data-role="popup" id="popabt" data-overlay-theme="b" data-theme="b" style="max-width:400px;">
+				<div data-role="header" data-theme="a">
+					<h1>关于小管家</h1>
+				</div>
+				<div role="main" class="ui-content">
+					<p>
+						该应用使用jquery mobile +Phonegap
+						框架以及图灵API
+					</p>
+				</div>
+			</div>
+
+			<!-- 右边panel -->
+			<div class="ui-panel ui-panel-position-right ui-panel-display-overlay ui-panel-animate ui-panel-closed"
+			data-role="panel" id="rpanel" data-position="right" data-display="overlay">
+
+				<div class="ui-panel-inner">
+					<div>
+						<h5>设置</h5>
+						<ul data-role="listview">
+							<li>
+								<a href="#popabt" data-rel="popup" data-position-to="window" data-transition="pop">关于</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<!-- header -->
+			<div data-role="header" data-position="fixed">
+				<a href="#lpanel" class="ui-btn ui-icon-bullets ui-btn-icon-notext ui-corner-all ui-btn-left">Main</a>
+				<h1>小欣</h1>
+				<a href="#rpanel" class="ui-btn ui-icon-gear ui-btn-icon-notext ui-corner-all ui-btn-right">Setting</a>
+			</div>
+
+			<div data-role="content" style="height: 80%;" data-position="fixed"  >
+				<div id="box"  class="box">
+					<div id="msgtext">
+						<!-- msg -->
+					</div>
+					<div id="bom"></div>
+				</div>
+			</div>
+			<!-- style="text-align: center;" -->
+			<div data-role="footer"  data-position="fixed">
+
+				<div style="width: 80%;" align="left">
+					<input  id="msgcont" value="" type="text">
+				</div>
+				<div style="width: 20%" align="right">
+					<a href="javascript:void(0)"  onclick="send()" id="btnsend" class="ui-btn ui-btn-right ui-btn-inline">发送</a>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>
